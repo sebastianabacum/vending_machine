@@ -1,13 +1,16 @@
-from django.shortcuts import redirect
-from rest_framework.response import Response
-from rest_framework.request import Request
-from rest_framework.views import APIView
+from decimal import Decimal
 from django.contrib.auth import authenticate, login, logout
+from django.http import HttpResponseBadRequest
 
-from apps.vending.models import VendingMachineSlot
+# from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from apps.vending.models import Buyer, VendingMachineSlot
 from apps.vending.serializers import VendingMachineSlotSerializer
 from apps.vending.validators import ListSlotsValidator
-import json
 
 
 class VendingMachineSlotsView(APIView):
@@ -28,15 +31,12 @@ class VendingMachineSlotsMatrixView(APIView):
         slots_matrix = [[None, None, None], [None, None, None], [None, None, None]]
         for row in range(0, 3):
             for column in range(0, 3):
-                print(row)
-                print(column)
                 filters = {}
                 filters["row"] = row
                 filters["column"] = column
                 slot = VendingMachineSlot.objects.filter(**filters)
                 if slot is not None:
                     slots_serializer = VendingMachineSlotSerializer(slot, many=True)
-                    print(r"data ", slots_serializer.data)
                     if len(slots_serializer.data) > 0:
                         slots_matrix[row][column] = slots_serializer.data[0]
                     else:
@@ -44,7 +44,6 @@ class VendingMachineSlotsMatrixView(APIView):
                 else:
                     slots_matrix[row][column] = None
 
-        print(slots_matrix)
         return Response(data=slots_matrix)
 
 
@@ -57,12 +56,36 @@ class VendingMachineSlotView(APIView):
         return Response(data=slots_serializer.data)
 
 
+class BuyerCreditView(APIView):
+    def post(self, request, *args, **kwargs):
+        amount = request.POST["amount"]
+        buyer = Buyer.objects.filter(id=request.user.id).all()[0]
+        if buyer is None:
+            return HttpResponseBadRequest(content="user not logged in")
+
+        current_amount = float(buyer.credit)
+        new_amount = current_amount + float(amount)
+
+        if new_amount < 0:
+            return HttpResponseBadRequest(content="cannot have negative salary")
+
+        buyer.credit = Decimal(new_amount)
+        buyer.save()
+
+        return Response(data={"success": True})
+
+
+class ProfileView(APIView):
+    def get(self, request: Request) -> Response:
+        if request.user.is_authenticated:
+            return Response(data=request.user)
+
+
 class LoginView(APIView):
     def post(self, request: Request) -> Response:
         username = request.POST["username"]
         password = request.POST["password"]
         user = authenticate(request, username=username, password=password)
-        print(user)
         if user is not None:
             login(self.request, user)
             return redirect("/vending-machine")
