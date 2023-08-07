@@ -6,6 +6,16 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
 
+from django.contrib.auth.models import User
+
+
+class Buyer(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    credit = models.DecimalField(
+        max_digits=4, decimal_places=2, validators=[MinValueValidator(Decimal("0.00"))]
+    )
+
+
 class Product(models.Model):
     class Meta:
         db_table = "product"
@@ -19,7 +29,7 @@ class Product(models.Model):
     updated_at = models.DateTimeField(null=True)
 
     def __str__(self):
-        return self.name + ' $' + str(self.price)
+        return self.name + " $" + str(self.price)
 
 
 class VendingMachineSlot(models.Model):

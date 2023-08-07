@@ -1,11 +1,13 @@
 from decimal import Decimal
 from unittest.mock import ANY
 
-import factory
 import pytest
 from rest_framework import status
 
-from apps.vending.models import Product, VendingMachineSlot
+from django.contrib.auth.models import User
+import factory
+from factory.django import DjangoModelFactory
+from apps.vending.models import Buyer, Product, VendingMachineSlot
 from apps.vending.tests.unit.product_tests import ProductFactory
 from apps.vending.tests.unit.vending_machine_slot_tests import VendingMachineSlotFactory
 
@@ -98,3 +100,81 @@ class TestListVendingMachineSlots:
 
         assert response.status_code == status.HTTP_200_OK
         assert response.json() == expected_response
+
+    @pytest.mark.django_db
+    def test_list_slots_returns_filtered_response(self, client, slots_grid):
+        response = client.get("/slots/?quantity=1")
+
+        expected_response = [
+            {
+                "id": ANY,
+                "quantity": 0,
+                "coordinates": [1, 1],
+                "product": {"id": ANY, "name": "Product 10", "price": "10.40"},
+            },
+            {
+                "id": ANY,
+                "quantity": 1,
+                "coordinates": [2, 1],
+                "product": {"id": ANY, "name": "Product 9", "price": "10.40"},
+            },
+            {
+                "id": ANY,
+                "quantity": 0,
+                "coordinates": [1, 2],
+                "product": {"id": ANY, "name": "Product 5", "price": "10.40"},
+            },
+            {
+                "id": ANY,
+                "quantity": 1,
+                "coordinates": [2, 2],
+                "product": {"id": ANY, "name": "Product 4", "price": "10.40"},
+            },
+        ]
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json() == expected_response
+
+    def test_invalid_quantity_filter_returns_bad_request(self, client):
+        response = client.get("/slots/?quantity=-1")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json() == {
+            "quantity": ["Ensure this value is greater than or equal to 0."]
+        }
+
+
+@pytest.mark.django_db
+class TestBuyerAuth:
+    def test_buyer_login(self, client):
+        user = User.objects.create_user("jorge", "jorge@abacum.io", "password")
+        Buyer.objects.create(user=user, credit=Decimal("5.00"))
+
+        response = client.post(
+            "/login/",
+            {"username": "jorge", "password": "password"},
+            Follow=True,
+        )
+
+        assert response.status_code == status.HTTP_302_FOUND
+        assert response["Location"] == "/vending-machine"
+
+    def test_buyer_logout(self, client):
+        user = User.objects.create_user("jorge", "jorge@abacum.io", "password")
+        Buyer.objects.create(user=user, credit=Decimal("5.00"))
+
+        response = client.post(
+            "/login/",
+            {"username": "jorge", "password": "password"},
+            Follow=True,
+        )
+
+        assert response.status_code == status.HTTP_302_FOUND
+        assert response["Location"] == "/vending-machine"
+
+        response = client.post(
+            "/logout/",
+            Follow=True,
+        )
+
+        assert response.status_code == status.HTTP_302_FOUND
+        assert response["Location"] == "/"

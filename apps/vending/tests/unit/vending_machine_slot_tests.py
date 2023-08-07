@@ -1,3 +1,4 @@
+from django import forms
 from apps.vending.tests.unit.product_tests import ProductFactory
 
 import pytest
@@ -31,3 +32,26 @@ def test_vending_machine_slot_creation():
 
     assert stored_vending_machine_slot == test_vending_machine_slot
     assert stored_vending_machine_slot.quantity == 3
+
+
+# @pytest.mark.django_db
+# class TestProductValidators:
+#     @pytest.mark.parametrize(
+#         "slot",
+#         [
+#             (-1),
+#             (-2),
+#             (-3),
+#         ],
+#         ids=["slot 1", "slot 2", "slot 3"],
+#     )
+#     @pytest.mark.django_db
+#     def test_product_creation_validators(self, slot):
+#         product = ProductFactory(name="chocolate")
+#         with pytest.raises(
+#             forms.ValidationError,
+#             match="Code 'SUM' is part of Abacum's grammar and cannot be used",
+#         ):
+#             VendingMachineSlot.objects.create(
+#                 row=slot, column=slot, quantity=2, product=product
+#             )

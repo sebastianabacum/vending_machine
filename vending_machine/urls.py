@@ -24,7 +24,16 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("healthcheck/", healthcheck),
     path("slots/", include([
-        # path("<uuid:id>", vending_views.MyDetailViewToBeDone.as_view()),
-        path("", vending_views.VendingMachineSlotView.as_view()),
+        path("<uuid:id>", vending_views.VendingMachineSlotView.as_view()),
+        path("", vending_views.VendingMachineSlotsView.as_view()),
+        path("matrix", vending_views.VendingMachineSlotsMatrixView.as_view()),
+    ])),
+
+    path("login/", include([
+        path("", vending_views.LoginView.as_view()),
+    ])),
+
+    path("logout/", include([
+        path("", vending_views.LogoutView.as_view()),
     ]))
 ]

@@ -1,5 +1,6 @@
 from _decimal import Decimal
 from datetime import datetime
+from django import forms
 
 import pytest
 from factory.django import DjangoModelFactory
@@ -84,8 +85,8 @@ def test_product_creation():
 #     )
 #     @pytest.mark.django_db
 #     def test_product_creation_validators(self, price, expected):
-#         product = ProductFactory(name="Blue Chocolate", price=price)
-
-#         stored_prod = Product.objects.get(name="Blue Chocolate")
-#         assert stored_prod.price == expected
-#         assert product.price == expected
+#         with pytest.raises(
+#             forms.ValidationError,
+#             match="Code 'SUM' is part of Abacum's grammar and cannot be used",
+#         ):
+#             Product.objects.create(name="chocolate", price=price)
