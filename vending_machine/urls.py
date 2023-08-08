@@ -35,6 +35,9 @@ urlpatterns = [
     path("refund/", include([
         path("", vending_views.BuyerRefundView.as_view()),
     ])),
+    path("order/", include([
+        path("", vending_views.BuyerOrderView.as_view()),
+    ])),
 
     path("profile/", include([
         path("", vending_views.ProfileView.as_view()),

@@ -1,4 +1,5 @@
 from decimal import Decimal
+import json
 from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponseBadRequest
 
@@ -7,6 +8,7 @@ from django.shortcuts import redirect
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import serializers
 
 from apps.vending.models import Buyer, VendingMachineSlot
 from apps.vending.serializers import VendingMachineSlotSerializer
@@ -87,6 +89,29 @@ class BuyerRefundView(APIView):
         buyer.save()
 
         return Response(data={"success": True, "refund": current_amount})
+
+
+class BuyerOrderView(APIView):
+    def post(self, request):
+        slot_id = request.POST["slot_id"]
+        quantity = request.POST["quantity"]
+        vending_machine_slot = VendingMachineSlot.objects.filter(id=slot_id)[0]
+        buyer = Buyer.objects.filter(id=request.user.id).all()[0]
+        if buyer is None:
+            return HttpResponseBadRequest(content="user not logged in")
+
+        current_amount = float(buyer.credit)
+        product_price = float(vending_machine_slot.product.price)
+        total_product_price = int(quantity) * product_price
+
+        if total_product_price > current_amount:
+            return HttpResponseBadRequest(content="Money not enough to buy products")
+
+        vending_machine_slot.delete()
+        buyer.credit = Decimal(current_amount - total_product_price)
+        buyer.save()
+
+        return Response(data={"success": True, "change": 0})
 
 
 class ProfileView(APIView):

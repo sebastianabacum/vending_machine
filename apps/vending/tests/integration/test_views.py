@@ -194,6 +194,48 @@ class TestBuyer:
         assert refund.status_code == status.HTTP_200_OK
         assert Buyer.objects.all()[0].credit == Decimal("0.00")
 
+    def test_buyer_order(self, client):
+        user = User.objects.create_user("jorge", "jorge@abacum.io", "password")
+        Buyer.objects.create(user=user, credit=Decimal("5.00"))
+        test_vending_machine_slot = VendingMachineSlotFactory()
+
+        client.post(
+            "/login/",
+            {"username": "jorge", "password": "password"},
+            Follow=True,
+        )
+
+        client.post("/add-credit/", {"amount": 20})
+        assert Buyer.objects.all()[0].credit == Decimal("25.00")
+
+        order = client.post(
+            "/order/", {"slot_id": test_vending_machine_slot.id, "quantity": 2}
+        )
+        assert order.status_code == status.HTTP_200_OK
+        assert Buyer.objects.all()[0].credit == Decimal("4.20")
+        assert len(VendingMachineSlot.objects.all()) == 0
+
+    def test_buyer_order_fails(self, client):
+        user = User.objects.create_user("jorge", "jorge@abacum.io", "password")
+        Buyer.objects.create(user=user, credit=Decimal("5.00"))
+        test_vending_machine_slot = VendingMachineSlotFactory()
+
+        client.post(
+            "/login/",
+            {"username": "jorge", "password": "password"},
+            Follow=True,
+        )
+
+        client.post("/add-credit/", {"amount": 5})
+        assert Buyer.objects.all()[0].credit == Decimal("10.00")
+
+        order = client.post(
+            "/order/", {"slot_id": test_vending_machine_slot.id, "quantity": 2}
+        )
+        assert order.status_code == status.HTTP_400_BAD_REQUEST
+        assert Buyer.objects.all()[0].credit == Decimal("10.00")
+        assert len(VendingMachineSlot.objects.all()) == 1
+
     def test_buyer_logout(self, client):
         user = User.objects.create_user("jorge", "jorge@abacum.io", "password")
         Buyer.objects.create(user=user, credit=Decimal("5.00"))
