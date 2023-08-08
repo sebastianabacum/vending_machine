@@ -175,6 +175,25 @@ class TestBuyer:
 
         assert Buyer.objects.all()[0].credit == Decimal("15.00")
 
+    def test_buyer_refund(self, client):
+        user = User.objects.create_user("jorge", "jorge@abacum.io", "password")
+        Buyer.objects.create(user=user, credit=Decimal("5.00"))
+
+        login = client.post(
+            "/login/",
+            {"username": "jorge", "password": "password"},
+            Follow=True,
+        )
+
+        add_credit = client.post("/add-credit/", {"amount": 10})
+        assert Buyer.objects.all()[0].credit == Decimal("15.00")
+        assert login.status_code == status.HTTP_302_FOUND
+        assert add_credit.status_code == status.HTTP_200_OK
+
+        refund = client.post("/refund/")
+        assert refund.status_code == status.HTTP_200_OK
+        assert Buyer.objects.all()[0].credit == Decimal("0.00")
+
     def test_buyer_logout(self, client):
         user = User.objects.create_user("jorge", "jorge@abacum.io", "password")
         Buyer.objects.create(user=user, credit=Decimal("5.00"))

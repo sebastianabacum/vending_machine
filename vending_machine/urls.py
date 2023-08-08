@@ -32,6 +32,9 @@ urlpatterns = [
     path("add-credit/", include([
         path("", vending_views.BuyerCreditView.as_view()),
     ])),
+    path("refund/", include([
+        path("", vending_views.BuyerRefundView.as_view()),
+    ])),
 
     path("profile/", include([
         path("", vending_views.ProfileView.as_view()),

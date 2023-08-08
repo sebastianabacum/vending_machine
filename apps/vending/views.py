@@ -75,6 +75,20 @@ class BuyerCreditView(APIView):
         return Response(data={"success": True})
 
 
+class BuyerRefundView(APIView):
+    def post(self, request, *args, **kwargs):
+        buyer = Buyer.objects.filter(id=request.user.id).all()[0]
+        if buyer is None:
+            return HttpResponseBadRequest(content="user not logged in")
+
+        current_amount = float(buyer.credit)
+
+        buyer.credit = Decimal("0.00")
+        buyer.save()
+
+        return Response(data={"success": True, "refund": current_amount})
+
+
 class ProfileView(APIView):
     def get(self, request: Request) -> Response:
         if request.user.is_authenticated:
