@@ -108,7 +108,7 @@ class BuyerOrderView(APIView):
             return HttpResponseBadRequest(content="Money not enough to buy products")
 
         vending_machine_slot_quantity = vending_machine_slot.quantity
-        if vending_machine_slot_quantity - quantity == 0:
+        if vending_machine_slot_quantity - int(quantity) == 0:
             vending_machine_slot.delete()
         else:
             vending_machine_slot.quantity -= 1
@@ -126,6 +126,8 @@ class ProfileView(APIView):
             buyer = Buyer.objects.get(user=request.user)
             buyer_serializer = BuyerSerializer(buyer)
             return Response(data=buyer_serializer.data)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoginView(APIView):

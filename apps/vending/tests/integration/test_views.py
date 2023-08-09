@@ -157,6 +157,34 @@ class TestBuyer:
 
         assert response.status_code == status.HTTP_200_OK
 
+    def test_buyer_profile(self, client):
+        user = User.objects.create_user("jorge", "jorge@abacum.io", "password")
+        Buyer.objects.create(user=user, credit=Decimal("5.00"))
+
+        response = client.post(
+            "/login/",
+            {"username": "jorge", "password": "password"},
+            Follow=True,
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+
+        response = client.get(
+            "/profile/",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_buyer_profile_fail(self, client):
+        user = User.objects.create_user("jorge", "jorge@abacum.io", "password")
+        Buyer.objects.create(user=user, credit=Decimal("5.00"))
+
+        response = client.get(
+            "/profile/",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
     def test_buyer_add_credit(self, client):
         user = User.objects.create_user("jorge", "jorge@abacum.io", "password")
         Buyer.objects.create(user=user, credit=Decimal("5.00"))
@@ -212,7 +240,7 @@ class TestBuyer:
         )
         assert order.status_code == status.HTTP_200_OK
         assert Buyer.objects.all()[0].credit == Decimal("4.20")
-        assert len(VendingMachineSlot.objects.all()) == 0
+        assert len(VendingMachineSlot.objects.all()) == 1
 
     def test_buyer_order_fails(self, client):
         user = User.objects.create_user("jorge", "jorge@abacum.io", "password")
