@@ -85,8 +85,6 @@ class BuyerRefundView(APIView):
         if buyer is None:
             return HttpResponseBadRequest(content="user not logged in")
 
-        current_amount = float(buyer.credit)
-
         buyer.credit = Decimal("0.00")
         buyer.save()
 

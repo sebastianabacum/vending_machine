@@ -41,7 +41,7 @@ class VendingMachineSlot(models.Model):
     quantity = models.IntegerField(
         validators=[MaxValueValidator(100), MinValueValidator(0)]
     )
-    row = models.IntegerField(validators=[MaxValueValidator(10), MinValueValidator(1)])
+    row = models.IntegerField(validators=[MaxValueValidator(10), MinValueValidator(0)])
     column = models.IntegerField(
-        validators=[MaxValueValidator(10), MinValueValidator(1)]
+        validators=[MaxValueValidator(10), MinValueValidator(0)]
     )
