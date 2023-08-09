@@ -15,3 +15,14 @@ class VendingMachineSlotSerializer(serializers.Serializer):
 
     def get_coordinates(self, instance) -> list[int, int]:
         return [instance.column, instance.row]
+
+
+class UserSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    name = serializers.CharField(source="first_name")
+    surname = serializers.CharField(source="last_name")
+
+
+class BuyerSerializer(serializers.Serializer):
+    balance = serializers.IntegerField(source="credit")
+    user = UserSerializer()

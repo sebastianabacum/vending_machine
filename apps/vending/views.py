@@ -7,13 +7,13 @@ from django.http import HttpResponseBadRequest
 
 # from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
-from rest_framework import serializers
+from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.vending.models import Buyer, VendingMachineSlot
-from apps.vending.serializers import VendingMachineSlotSerializer
+from apps.vending.serializers import BuyerSerializer, VendingMachineSlotSerializer
 from apps.vending.validators import ListSlotsValidator
 
 
@@ -134,18 +134,15 @@ class LoginView(APIView):
             if not buyer:
                 buyer = Buyer.objects.create(user=user, credit=0)
 
+            buyer_serializer = BuyerSerializer(buyer)
             return Response(
-                data={
-                    "name": user.first_name,
-                    "surname": user.last_name,
-                    "balance": buyer.credit,
-                }
+                data=buyer_serializer.data
             )
         else:
-            return redirect("/")
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class LogoutView(APIView):
     def post(self, request: Request) -> Response:
         logout(request)
-        return redirect("/")
+        return Response(status=status.HTTP_200_OK)
