@@ -90,7 +90,7 @@ class BuyerRefundView(APIView):
         buyer.credit = Decimal("0.00")
         buyer.save()
 
-        return Response(data={"success": True, "refund": current_amount})
+        return Response(data={"balance": current_amount})
 
 
 class BuyerOrderView(APIView):
@@ -109,11 +109,17 @@ class BuyerOrderView(APIView):
         if total_product_price > current_amount:
             return HttpResponseBadRequest(content="Money not enough to buy products")
 
-        vending_machine_slot.delete()
+        vending_machine_slot_quantity = vending_machine_slot.quantity
+        if vending_machine_slot_quantity - quantity == 0:
+            vending_machine_slot.delete()
+        else:
+            vending_machine_slot.quantity -= 1
+            vending_machine_slot.save()
+
         buyer.credit = Decimal(current_amount - total_product_price)
         buyer.save()
 
-        return Response(data={"success": True, "change": 0})
+        return Response(data={"balance": buyer.credit})
 
 
 class ProfileView(APIView):
