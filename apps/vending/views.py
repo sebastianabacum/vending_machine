@@ -76,7 +76,7 @@ class BuyerCreditView(APIView):
         buyer.credit = Decimal(new_amount)
         buyer.save()
 
-        return Response(data={"success": True})
+        return Response(data={"balance": new_amount})
 
 
 class BuyerRefundView(APIView):
