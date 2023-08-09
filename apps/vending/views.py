@@ -63,7 +63,7 @@ class VendingMachineSlotView(APIView):
 class BuyerCreditView(APIView):
     def post(self, request, *args, **kwargs):
         amount = request.data["amount"]
-        buyer = Buyer.objects.filter(id=request.user.id).first()
+        buyer = Buyer.objects.filter(user=request.user).first()
         if buyer is None:
             return HttpResponseBadRequest(content="user not logged in")
 
@@ -81,7 +81,7 @@ class BuyerCreditView(APIView):
 
 class BuyerRefundView(APIView):
     def post(self, request, *args, **kwargs):
-        buyer = Buyer.objects.filter(id=request.user.id).first()
+        buyer = Buyer.objects.filter(user=request.user).first()
         if buyer is None:
             return HttpResponseBadRequest(content="user not logged in")
 
@@ -98,7 +98,7 @@ class BuyerOrderView(APIView):
         slot_id = request.data["slot_id"]
         quantity = request.data["quantity"]
         vending_machine_slot = VendingMachineSlot.objects.filter(id=slot_id).first()
-        buyer = Buyer.objects.filter(id=request.user.id).first()
+        buyer = Buyer.objects.filter(user=request.user).first()
         if buyer is None:
             return HttpResponseBadRequest(content="user not logged in")
 
