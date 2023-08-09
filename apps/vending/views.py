@@ -119,7 +119,9 @@ class BuyerOrderView(APIView):
 class ProfileView(APIView):
     def get(self, request: Request) -> Response:
         if request.user.is_authenticated:
-            return Response(data=request.user)
+            buyer = Buyer.objects.get(user=request.user).first()
+            buyer_serializer = BuyerSerializer(buyer)
+            return Response(data=buyer_serializer.data)
 
 
 class LoginView(APIView):
