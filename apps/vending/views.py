@@ -1,14 +1,16 @@
-from decimal import Decimal
 import json
+from decimal import Decimal
+
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseBadRequest
 
 # from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
+from rest_framework import serializers
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import serializers
 
 from apps.vending.models import Buyer, VendingMachineSlot
 from apps.vending.serializers import VendingMachineSlotSerializer
@@ -60,8 +62,8 @@ class VendingMachineSlotView(APIView):
 
 class BuyerCreditView(APIView):
     def post(self, request, *args, **kwargs):
-        amount = request.POST["amount"]
-        buyer = Buyer.objects.filter(id=request.user.id).all()[0]
+        amount = request.data["amount"]
+        buyer = Buyer.objects.filter(id=request.user.id).first()
         if buyer is None:
             return HttpResponseBadRequest(content="user not logged in")
 
@@ -79,7 +81,7 @@ class BuyerCreditView(APIView):
 
 class BuyerRefundView(APIView):
     def post(self, request, *args, **kwargs):
-        buyer = Buyer.objects.filter(id=request.user.id).all()[0]
+        buyer = Buyer.objects.filter(id=request.user.id).first()
         if buyer is None:
             return HttpResponseBadRequest(content="user not logged in")
 
@@ -93,10 +95,10 @@ class BuyerRefundView(APIView):
 
 class BuyerOrderView(APIView):
     def post(self, request):
-        slot_id = request.POST["slot_id"]
-        quantity = request.POST["quantity"]
-        vending_machine_slot = VendingMachineSlot.objects.filter(id=slot_id)[0]
-        buyer = Buyer.objects.filter(id=request.user.id).all()[0]
+        slot_id = request.data["slot_id"]
+        quantity = request.data["quantity"]
+        vending_machine_slot = VendingMachineSlot.objects.filter(id=slot_id).first()
+        buyer = Buyer.objects.filter(id=request.user.id).first()
         if buyer is None:
             return HttpResponseBadRequest(content="user not logged in")
 
@@ -122,12 +124,23 @@ class ProfileView(APIView):
 
 class LoginView(APIView):
     def post(self, request: Request) -> Response:
-        username = request.POST["username"]
-        password = request.POST["password"]
+        username = request.data["username"]
+        password = request.data["password"]
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(self.request, user)
-            return redirect("/vending-machine")
+
+            buyer = Buyer.objects.filter(user=user).first()
+            if not buyer:
+                buyer = Buyer.objects.create(user=user, credit=0)
+
+            return Response(
+                data={
+                    "name": user.first_name,
+                    "surname": user.last_name,
+                    "balance": buyer.credit,
+                }
+            )
         else:
             return redirect("/")
 
